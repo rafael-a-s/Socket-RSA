@@ -36,21 +36,15 @@ public class GeneratedPairKeysRSA {
         PublicKey publicKey = pair.getPublic();
 
 
-        String pubFileName = username + ContantsProject.SUFIX_PUB_FILE;
+    createDirectoryForUser(username);
 
-        File file = new File(this.getDirectory(),pubFileName);
+       savePubKey(username, publicKey);
+       savePrivKey(username, privateKey);
 
-        try (FileOutputStream fos = new FileOutputStream(file)) {
-            fos.write(publicKey.getEncoded());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        File publicFile = new File(this.getDirectory() ,pubFileName);
-        byte[] publicFileBytes = Files.readAllBytes(publicFile.toPath());
+        byte[] keyBytes = readKey(username, ContantsProject.PUBLIC_KEY);
 
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-        EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(publicFileBytes);
+        EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(keyBytes);
         keyFactory.generatePublic(pubKeySpec);
 
         String msg = "Oi alice";
@@ -85,9 +79,48 @@ public class GeneratedPairKeysRSA {
         return directory;
     }
 
+    boolean createDirectoryForUser(String username) {
+        File folder = new File(getDirectory(),username);
+        if (!folder.exists()) {
+            folder.mkdirs();
+            return folder.exists();
+        }
+
+        return false;
+    }
+
+    void savePubKey(String username, PublicKey publicKey ) {
+        File file = new File(this.getDirectory() +"/"+ username, username + ContantsProject.SUFIX_PUB_FILE.getName());
+
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            fos.write(publicKey.getEncoded());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    void savePrivKey(String username, PrivateKey privateKey ) {
+        File file = new File(this.getDirectory() + "/" + username, username + ContantsProject.SUFIX_PRIV_FILE.getName());
+
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            fos.write(privateKey.getEncoded());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    byte[] readKey(String username, ContantsProject key) throws IOException{
+        if(key.equals(ContantsProject.PRIVATE_KEY)) {
+            File privateFile = new File(this.getDirectory()+ "/" + username , username + ContantsProject.SUFIX_PRIV_FILE.getName());
+            return Files.readAllBytes(privateFile.toPath());
+        }
+        File publicFile = new File(this.getDirectory() + "/" + username , username + ContantsProject.SUFIX_PUB_FILE.getName());
+        return Files.readAllBytes(publicFile.toPath());
+    }
+
     public static void main(String[] args) throws NoSuchAlgorithmException, IOException, InvalidKeySpecException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
         GeneratedPairKeysRSA grsa = new GeneratedPairKeysRSA();
 
-        grsa.generatedKeys("bob");
+        grsa.generatedKeys("alice");
     }
 }
