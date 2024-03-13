@@ -1,6 +1,19 @@
 package org.sas.contants;
 
-public class ContantsProject {
+public enum ContantsProject {
 
-    public final static String SUFIX_PUB_FILE = "_pub.key";
+    SUFIX_PUB_FILE("_pub.key"),
+    SUFIX_PRIV_FILE("_priv.key"),
+    PUBLIC_KEY("pub"),
+    PRIVATE_KEY("priv");
+
+    String name;
+
+    ContantsProject(String name) {
+        this.name = name;
+    }
+
+    public String getName(){
+        return name;
+    }
 }
