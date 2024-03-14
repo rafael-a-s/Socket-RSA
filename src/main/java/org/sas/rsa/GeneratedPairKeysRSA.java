@@ -12,9 +12,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.*;
-import java.security.spec.EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
 public class GeneratedPairKeysRSA {
@@ -43,29 +41,39 @@ public class GeneratedPairKeysRSA {
 
         byte[] keyBytes = readKey(username, ContantsProject.PUBLIC_KEY);
 
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-        EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(keyBytes);
-        keyFactory.generatePublic(pubKeySpec);
+        Key publicKey2 = FactoryKey.generatedKey(ContantsProject.PUBLIC_KEY, keyBytes);
 
-        String msg = "Oi alice";
+        
+        byte[] encryptedMsgBytes = encrypt("Olá Alice!", username, publicKey2);
 
-        Cipher encryptCipher = Cipher.getInstance("RSA");
-        encryptCipher.init(Cipher.ENCRYPT_MODE, publicKey);
-
-        byte[] secretMsgBytes = msg.getBytes(StandardCharsets.UTF_8);
-        byte[] encryptedMsgBytes = encryptCipher.doFinal(secretMsgBytes);
-
-        String encondedMessage = Base64.getEncoder().encodeToString(encryptedMsgBytes);
+        String encondedMessage = Base64.getEncoder().encodeToString(encryptedMsgBytes); //Transformando em formato legivel
         System.out.println(encondedMessage);
 
-        Cipher decryptCipher = Cipher.getInstance("RSA");
-        decryptCipher.init(Cipher.DECRYPT_MODE, privateKey);
+        byte[] privKeyBytes = readKey(username, ContantsProject.PRIVATE_KEY);
+        Key privateKey2 = FactoryKey.generatedKey(ContantsProject.PRIVATE_KEY, privKeyBytes);
 
-        byte[] decryptedMsgMessageBytes = decryptCipher.doFinal(encryptedMsgBytes);
+        byte[] decryptedMsgMessageBytes = decrypt(encryptedMsgBytes, username, privateKey2);
         String decryptedMsg = new String(decryptedMsgMessageBytes, StandardCharsets.UTF_8);
 
         System.out.println(decryptedMsg);
 
+    }
+
+    byte[] encrypt(String msg, String username, Key key) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IOException, IllegalBlockSizeException, BadPaddingException {
+
+        Cipher cipher = Cipher.getInstance("RSA");
+        cipher.init(Cipher.ENCRYPT_MODE, key);
+        byte[] msgByte = msg.getBytes(StandardCharsets.UTF_8);
+
+        return cipher.doFinal(msgByte);
+    }
+
+    byte[] decrypt(byte[] encryptedMsgBytes, String username, Key key) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IOException, IllegalBlockSizeException, BadPaddingException {
+
+        Cipher cipher = Cipher.getInstance("RSA");
+        cipher.init(Cipher.DECRYPT_MODE, key);
+
+        return cipher.doFinal(encryptedMsgBytes);
     }
 
     public File getDirectory() {
