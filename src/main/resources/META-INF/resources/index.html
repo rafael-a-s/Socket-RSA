@@ -28,8 +28,15 @@
 <div class="container">
     <br/>
     <div class="row">
-        <input id="name" class="col-md-4" type="text" placeholder="your name">
+        <input id="name" class="col-md-4" type="text" placeholder="Seu username">
         <button id="connect" class="col-md-1 btn btn-primary" type="button">connect</button>
+        <br/>
+        <br/>
+    </div>
+
+    <div class="row">
+        <input id="namefriend" class="col-md-4" type="text" placeholder="Username do seu amigo">
+        <button id="connectfriend" class="col-md-1 btn btn-primary" type="button">Conectar com seu amigo</button>
         <br/>
         <br/>
     </div>
@@ -46,14 +53,18 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.24.0/js/patternfly.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/forge/0.10.0/forge.min.js"></script>
 
 <script type="text/javascript">
     var connected = false;
     var socket;
+    var publicKey;
+    var forge;
 
     $( document ).ready(function() {
         $("#connect").click(connect);
         $("#send").click(sendMessage);
+        $("#connectfriend").click(fetchPublicKey);
 
         $("#name").keypress(function(event){
             if(event.keyCode == 13 || event.which == 13) {
@@ -77,7 +88,6 @@
     var connect = function() {
         if (! connected) {
             var name = $("#name").val();
-            console.log("Val: " + name);
             socket = new WebSocket("ws://" + location.host + "/chat/" + name);
             socket.onopen = function() {
                 connected = true;
@@ -95,24 +105,60 @@
         }
     };
 
+    var fetchPublicKey = function () {
+
+        var username = $("#namefriend").val();
+        console.log(username);
+        $.ajax({
+            url: "http://localhost:8080/key/" + username,
+            type: "GET",
+            success: function (response) {
+                publicKey = response;
+
+                console.log("Public Key fetched successfully: " + publicKey);
+            },
+            error: function (error) {
+                console.error("Error fetching public key: ", error);
+            }
+        });
+    };
+
     var sendMessage = function() {
         if (connected) {
-            var value = $("#msg").val();
-            console.log("Sending " + value);
-            socket.send(value);
+            var message = $("#msg").val();
+            var friend = $("#namefriend").val();
+
+            console.log("Encrypting and sending: " + message);
+            console.log("Friend: " + friend);
+
+            // Certifique-se de que a variável publicKey contém a chave pública do servidor
+            var encryptedMessage = encryptMessage(message, publicKey);
+            console.log("Encrypted message: " + encryptedMessage);
+
+            // var body = {
+            //     "message": encryptedMessage,
+            //     "friend": friend,
+            // }
+
+            socket.send(encryptedMessage);
             $("#msg").val("");
         }
     };
 
+    function encryptMessage(message, publicKey) {
+        var forgePublicKey = forge.pki.publicKeyFromPem(publicKey);
+        var bytes = forge.util.encodeUtf8(message);
+
+        var encrypted = forgePublicKey.encrypt(bytes, 'RSA-OAEP');
+
+        var base64 = forge.util.encode64(encrypted);
+
+        return base64;
+    }
+
     var scrollToBottom = function () {
         $('#chat').scrollTop($('#chat')[0].scrollHeight);
     };
-
-    function encryptMessage(message, publicKey) {
-        var forgePublicKey = forge.pki.publicKeyFromPem(publicKey);
-        var encrypted = forgePublicKey.encrypt(message, 'RSA-OAEP');
-        return encrypted;
-    }
 
 </script>
 </body>

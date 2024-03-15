@@ -52,6 +52,7 @@ public class ChatSocket {
 
     @OnMessage
     public void onMessage(String message, @PathParam("username") String username) {
+        System.out.println(message);
         if (message.equalsIgnoreCase("_ready_")) {
             broadcast("User " + username + " joined");
         } else {

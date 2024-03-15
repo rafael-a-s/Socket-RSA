@@ -139,6 +139,6 @@ public class GeneratedPairKeysRSA {
             NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {
         GeneratedPairKeysRSA grsa = new GeneratedPairKeysRSA();
 
-        grsa.generatedKeys("alice");
+        grsa.generatedKeys("bob");
     }
 }
