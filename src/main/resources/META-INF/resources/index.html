@@ -108,6 +108,12 @@
         $('#chat').scrollTop($('#chat')[0].scrollHeight);
     };
 
+    function encryptMessage(message, publicKey) {
+        var forgePublicKey = forge.pki.publicKeyFromPem(publicKey);
+        var encrypted = forgePublicKey.encrypt(message, 'RSA-OAEP');
+        return encrypted;
+    }
+
 </script>
 </body>
 
