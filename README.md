@@ -59,8 +59,36 @@ If you want to learn more about building native executables, please consult http
 
 ## Provided Code
 
-### WebSockets
+```java
+public void generatedKeys(String username) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException,
+            NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+        KeyPair pair = this.generator.generateKeyPair();
 
-WebSocket communication channel starter code
+        PrivateKey privateKey = pair.getPrivate();
+        PublicKey publicKey = pair.getPublic();
 
-[Related guide section...](https://quarkus.io/guides/websockets)
+        createDirectoryForUser(username);
+
+        savePubKey(username, publicKey);
+        savePrivKey(username, privateKey);
+
+        byte[] keyBytes = readKey(username, ContantsProject.PUBLIC_KEY);
+
+        Key publicKey2 = FactoryKey.generatedKey(ContantsProject.PUBLIC_KEY, keyBytes);
+
+        byte[] encryptedMsgBytes = encrypt("Olá Alice!", username, publicKey2);
+
+        String encondedMessage = Base64.getEncoder().encodeToString(encryptedMsgBytes); // Transformando em formato
+                                                                                        // legivel
+        System.out.println(encondedMessage);
+
+        byte[] privKeyBytes = readKey(username, ContantsProject.PRIVATE_KEY);
+        Key privateKey2 = FactoryKey.generatedKey(ContantsProject.PRIVATE_KEY, privKeyBytes);
+
+        byte[] decryptedMsgMessageBytes = decrypt(encryptedMsgBytes, username, privateKey2);
+        String decryptedMsg = new String(decryptedMsgMessageBytes, StandardCharsets.UTF_8);
+
+        System.out.println(decryptedMsg);
+
+    }
+```
