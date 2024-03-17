@@ -2,6 +2,8 @@
 
 Este projeto é uma aplicação de chat que utiliza a tecnologia Quarkus para o backend e WebSockets para comunicação em tempo real. A segurança das mensagens é assegurada por meio da criptografia RSA, garantindo que as mensagens sejam enviadas de forma segura entre os usuários.
 
+![Imagem do projeto](src/main/resources/META-INF/resources/image/img.png)
+
 ## Funcionalidades
 
 - **Conexão WebSocket**: Os usuários se conectam ao chat por meio de uma conexão WebSocket, que permite a comunicação bidirecional em tempo real.
