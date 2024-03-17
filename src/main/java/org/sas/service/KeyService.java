@@ -1,6 +1,10 @@
 package org.sas.service;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
 
 import org.sas.contants.ContantsProject;
@@ -15,8 +19,7 @@ public class KeyService {
     @Inject
     GeneratedPairKeysRSA generatedPairKeysRSA;
 
-    public String getKeyPub(String username) throws IOException {
-        var pubKeyByte = generatedPairKeysRSA.readKey(username, ContantsProject.PUBLIC_KEY);
-        return new String(pubKeyByte);
+    public String getKeyPub(String username) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+        return generatedPairKeysRSA.readPunPem(username);
     }
 }

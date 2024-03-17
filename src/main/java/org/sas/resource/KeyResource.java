@@ -1,6 +1,8 @@
 package org.sas.resource;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 
 import org.sas.service.KeyService;
 
@@ -21,7 +23,7 @@ public class KeyResource {
     @GET
     @Path("/{username}")
     @Produces(MediaType.TEXT_PLAIN)
-    public Response getKeyPublic(@PathParam("username") String username) throws IOException {
+    public Response getKeyPublic(@PathParam("username") String username) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
         var key = service.getKeyPub(username);
         System.out.println(key);
         return Response.ok(key).build();
