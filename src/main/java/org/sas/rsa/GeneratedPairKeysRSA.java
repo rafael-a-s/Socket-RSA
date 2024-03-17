@@ -1,5 +1,6 @@
 package org.sas.rsa;
 
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.sas.contants.ContantsProject;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -11,10 +12,13 @@ import javax.crypto.NoSuchPaddingException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.*;
+import java.security.spec.EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
 @ApplicationScoped
@@ -41,25 +45,6 @@ public class GeneratedPairKeysRSA {
 
         savePubKey(username, publicKey);
         savePrivKey(username, privateKey);
-
-        byte[] keyBytes = readKey(username, ContantsProject.PUBLIC_KEY);
-
-        Key publicKey2 = FactoryKey.generatedKey(ContantsProject.PUBLIC_KEY, keyBytes);
-
-        byte[] encryptedMsgBytes = encrypt("Olá Alice!", username, publicKey2);
-
-        String encondedMessage = Base64.getEncoder().encodeToString(encryptedMsgBytes); // Transformando em formato
-                                                                                        // legivel
-        System.out.println(encondedMessage);
-
-        byte[] privKeyBytes = readKey(username, ContantsProject.PRIVATE_KEY);
-        Key privateKey2 = FactoryKey.generatedKey(ContantsProject.PRIVATE_KEY, privKeyBytes);
-
-        byte[] decryptedMsgMessageBytes = decrypt(encryptedMsgBytes, username, privateKey2);
-        String decryptedMsg = new String(decryptedMsgMessageBytes, StandardCharsets.UTF_8);
-
-        System.out.println(decryptedMsg);
-
     }
 
     byte[] encrypt(String msg, String username, Key key) throws InvalidKeyException, NoSuchAlgorithmException,
@@ -72,14 +57,18 @@ public class GeneratedPairKeysRSA {
         return cipher.doFinal(msgByte);
     }
 
-    byte[] decrypt(byte[] encryptedMsgBytes, String username, Key key)
+    public String decrypt(String encryptedMsg, String username)
             throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IOException,
-            IllegalBlockSizeException, BadPaddingException {
+            IllegalBlockSizeException, BadPaddingException, InvalidKeySpecException {
 
-        Cipher cipher = Cipher.getInstance("RSA");
-        cipher.init(Cipher.DECRYPT_MODE, key);
+        Key privateKey = readKey(username, ContantsProject.PRIVATE_KEY);
 
-        return cipher.doFinal(encryptedMsgBytes);
+        byte[] encryptedMsgBytes = Base64.getDecoder().decode(encryptedMsg);
+
+        Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-1AndMGF1Padding");
+        cipher.init(Cipher.DECRYPT_MODE, privateKey);
+
+        return new String(cipher.doFinal(encryptedMsgBytes), StandardCharsets.UTF_8);
     }
 
     public File getDirectory() {
@@ -124,15 +113,33 @@ public class GeneratedPairKeysRSA {
         }
     }
 
-    public byte[] readKey(String username, ContantsProject key) throws IOException {
+    public Key readKey(String username, ContantsProject key) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
         if (key.equals(ContantsProject.PRIVATE_KEY)) {
             File privateFile = new File(this.getDirectory() + "/" + username,
                     username + ContantsProject.SUFIX_PRIV_FILE.getName());
-            return Files.readAllBytes(privateFile.toPath());
+            return FactoryKey.privateKey(Files.readAllBytes(privateFile.toPath()));
         }
         File publicFile = new File(this.getDirectory() + "/" + username,
                 username + ContantsProject.SUFIX_PUB_FILE.getName());
-        return Files.readAllBytes(publicFile.toPath());
+        return FactoryKey.publicKey(Files.readAllBytes(publicFile.toPath()));
+    }
+
+    public String readPunPem(String username) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+        File publicFile = new File(this.getDirectory() + "/" + username,
+                username + ContantsProject.SUFIX_PUB_FILE.getName());
+        var fileBytes = Files.readAllBytes(publicFile.toPath());
+
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(fileBytes);
+        PublicKey key = keyFactory.generatePublic(pubKeySpec);
+
+        StringWriter stringWriter = new StringWriter();
+
+        try (JcaPEMWriter pemWriter = new JcaPEMWriter(stringWriter)) {
+            pemWriter.writeObject(key);
+        }
+
+        return stringWriter.toString();
     }
 
     public static void main(String[] args) throws NoSuchAlgorithmException, IOException, InvalidKeySpecException,
