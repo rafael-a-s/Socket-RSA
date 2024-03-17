@@ -4,92 +4,91 @@
 <head>
     <meta charset="UTF-8">
     <title>Quarkus Chat!</title>
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.24.0/css/patternfly.min.css">
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.24.0/css/patternfly-additions.min.css">
-
-    <style>
-        #chat {
-            resize: none;
-            overflow: hidden;
-            min-height: 300px;
-            max-height: 300px;
-        }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body>
-<nav class="navbar navbar-default navbar-pf" role="navigation">
-    <div class="navbar-header">
-        <a class="navbar-brand" href="/">
-            <p><strong>>> Quarkus Chat!</strong></p>
-        </a>
+<body class="bg-zinc-900 h-screen flex flex-col justify-evenly align-center relative">
+
+<nav class="flex absolute top-0 w-full justify-between p-4">
+    <div class="mb-6 flex gap-3">
+        <input id="name" class="block w-full p-4 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-base
+            focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400
+            dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" type="text" placeholder="Seu username">
+        <button id="connect" class="text-white bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700
+                hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-purple-300
+                dark:focus:ring-purple-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"
+                type="button">connect</button>
+    </div>
+
+    <div class="mb-6 flex gap-3">
+        <input id="namefriend" class="block w-full p-4 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-base
+            focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400
+            dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" type="text" placeholder="Username do seu amigo">
+        <button id="connectfriend" class="text-white bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700
+                hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-purple-300
+                dark:focus:ring-purple-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2" type="button">Conectar com seu amigo</button>
     </div>
 </nav>
-<div class="container">
-    <br/>
-    <div class="row">
-        <input id="name" class="col-md-4" type="text" placeholder="Seu username">
-        <button id="connect" class="col-md-1 btn btn-primary" type="button">connect</button>
-        <br/>
-        <br/>
-    </div>
 
-    <div class="row">
-        <input id="namefriend" class="col-md-4" type="text" placeholder="Username do seu amigo">
-        <button id="connectfriend" class="col-md-1 btn btn-primary" type="button">Conectar com seu amigo</button>
-        <br/>
-        <br/>
-    </div>
-    <div class="row">
-        <textarea class="col-md-8" id="chat"></textarea>
-    </div>
-    <div class="row">
-        <input class="col-md-6" id="msg" type="text" placeholder="enter your message">
-        <button class="col-md-1 btn btn-primary" id="send" type="button" disabled>send</button>
-    </div>
+<main class="w-full flex flex-col justify-center gap-7 items-center p-4">
 
-</div>
+        <textarea class="block p-2.5 w-full min-h-96 text-sm text-gray-900 bg-gray-50 rounded-lg border
+        border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700
+        dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500
+        dark:focus:border-blue-500" id="chat"></textarea>
+
+
+</main>
+
+<footer class="absolute bottom-0 w-full p-4">
+    <div class="mb-6 flex gap-3">
+        <input class="block w-full p-4 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-base
+            focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400
+            dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" id="msg" type="text" placeholder="Digite sua mensagem">
+        <button class="text-white bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700
+                hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-purple-300
+                dark:focus:ring-purple-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2" id="send" type="button" disabled>Enviar</button>
+    </div>
+</footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/patternfly/3.24.0/js/patternfly.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/forge/0.10.0/forge.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
 
 <script type="text/javascript">
     var connected = false;
     var socket;
     var publicKey;
-    var forge;
 
-    $( document ).ready(function() {
+    $(document).ready(function () {
         $("#connect").click(connect);
         $("#send").click(sendMessage);
         $("#connectfriend").click(fetchPublicKey);
 
-        $("#name").keypress(function(event){
-            if(event.keyCode == 13 || event.which == 13) {
+        $("#name").keypress(function (event) {
+            if (event.keyCode == 13 || event.which == 13) {
                 connect();
             }
         });
 
-        $("#msg").keypress(function(event) {
-            if(event.keyCode == 13 || event.which == 13) {
+        $("#msg").keypress(function (event) {
+            if (event.keyCode == 13 || event.which == 13) {
                 sendMessage();
             }
         });
 
-        $("#chat").change(function() {
+        $("#chat").change(function () {
             scrollToBottom();
         });
 
         $("#name").focus();
     });
 
-    var connect = function() {
-        if (! connected) {
+    var connect = function () {
+        if (!connected) {
             var name = $("#name").val();
             socket = new WebSocket("ws://" + location.host + "/chat/" + name);
-            socket.onopen = function() {
+            socket.onopen = function () {
                 connected = true;
                 console.log("Connected to the web socket");
                 $("#send").attr("disabled", false);
@@ -97,7 +96,7 @@
                 $("#name").attr("disabled", true);
                 $("#msg").focus();
             };
-            socket.onmessage =function(m) {
+            socket.onmessage = function (m) {
                 console.log("Got message: " + m.data);
                 $("#chat").append(m.data + "\n");
                 scrollToBottom();
@@ -121,9 +120,10 @@
                 console.error("Error fetching public key: ", error);
             }
         });
+        $("#chat").append("Conectado com >>" + username + "\n");
     };
 
-    var sendMessage = function() {
+    var sendMessage = function () {
         if (connected) {
             var message = $("#msg").val();
             var friend = $("#namefriend").val();
@@ -135,12 +135,12 @@
             var encryptedMessage = encryptMessage(message, publicKey);
             console.log("Encrypted message: " + encryptedMessage);
 
-            // var body = {
-            //     "message": encryptedMessage,
-            //     "friend": friend,
-            // }
+            var body = {
+                "message": encryptedMessage,
+                "friend": friend,
+            }
 
-            socket.send(encryptedMessage);
+            socket.send(JSON.stringify(body));
             $("#msg").val("");
         }
     };
@@ -150,7 +150,6 @@
         var bytes = forge.util.encodeUtf8(message);
 
         var encrypted = forgePublicKey.encrypt(bytes, 'RSA-OAEP');
-
         var base64 = forge.util.encode64(encrypted);
 
         return base64;
