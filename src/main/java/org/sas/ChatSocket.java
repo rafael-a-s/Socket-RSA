@@ -1,8 +1,14 @@
 package org.sas;
 
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import io.vertx.core.json.jackson.JacksonCodec;
+import io.vertx.core.json.jackson.JacksonFactory;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.websocket.OnClose;
@@ -15,6 +21,10 @@ import jakarta.websocket.server.ServerEndpoint;
 
 import org.jboss.logging.Logger;
 import org.sas.service.ChatService;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
 @ServerEndpoint("/chat/{username}")
 @ApplicationScoped
@@ -32,7 +42,7 @@ public class ChatSocket {
         try {
             service.registerUser(username);
         } catch (Exception e) {
-           System.out.println(e);
+            System.out.println(e);
         }
         sessions.put(username, session);
     }
@@ -51,24 +61,23 @@ public class ChatSocket {
     }
 
     @OnMessage
-    public void onMessage(String message, @PathParam("username") String username) {
-        System.out.println(message);
-        if (message.equalsIgnoreCase("_ready_")) {
-            broadcast("User " + username + " joined");
-        } else {
-            broadcast(">> " + username + ": " + message);
-            send(message, username);
-        }
+    public void onMessage(String message, @PathParam("username") String username) throws NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, IOException, BadPaddingException, InvalidKeySpecException, InvalidKeyException {
+        var map = service.convertStringToMap(message);
+        send(map.get("message"), map.get("friend"), username);
     }
 
-    private void send(String message, String username) {
+    private void send(String messageEncrypted, String friend, String username) throws NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, IOException, BadPaddingException, InvalidKeySpecException, InvalidKeyException {
+        String messageDecrypted = service.decryptMessage(messageEncrypted, friend);
+        String message = username + " >> " + messageDecrypted;
+
+        sessions.get(friend)
+                        .getAsyncRemote()
+                            .sendObject(message);
+
+
         sessions.get(username)
-            .getAsyncRemote()
-            .sendObject(message, result -> {
-                if (result.getException() != null) {
-                    System.out.println("Unable to send message: " + result.getException());
-                }
-            });
+                .getAsyncRemote()
+                    .sendObject(message);
     }
 
     private void broadcast(String message) {
